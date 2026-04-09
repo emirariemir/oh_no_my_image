@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Oh No My Image</title>
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <div class="app-shell">
+      <canvas id="scene" aria-label="Interactive particle canvas"></canvas>
+
+      <header class="topbar">
+        <div class="brand">
+          <span class="brand-mark"></span>
+          <div>
+            <p class="eyebrow">Personal experiment</p>
+            <h1>Oh No My Image</h1>
+          </div>
+        </div>
+
+        <div class="controls">
+          <label class="button button-primary" for="imageUpload">Upload image</label>
+          <input id="imageUpload" type="file" accept="image/*" />
+          <button id="regroupButton" class="button" type="button" disabled>Regroup</button>
+          <button id="clearWellsButton" class="button button-ghost" type="button" disabled>
+            Clear wells
+          </button>
+        </div>
+      </header>
+
+      <section id="intro" class="intro-card">
+        <p class="eyebrow">Interactive visual prototype</p>
+        <h2>Turn a photo into living particles.</h2>
+        <p class="intro-copy">
+          Upload an image, shove it around with your cursor, and click to plant temporary
+          gravity wells that bend the picture into new shapes.
+        </p>
+        <div class="intro-actions">
+          <label class="button button-primary" for="imageUpload">Choose an image</label>
+          <p class="hint">Move to scatter. Click to attract. Regroup to recompose.</p>
+        </div>
+      </section>
+
+      <footer class="hud">
+        <p id="statusLabel">Awaiting an upload.</p>
+        <p class="hud-copy">Desktop-first. Best with a photo that has strong contrast.</p>
+      </footer>
+    </div>
+
+    <script src="./app.js"></script>
+  </body>
+</html>
