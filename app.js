@@ -22,9 +22,11 @@ const state = {
   width: window.innerWidth,
   height: window.innerHeight,
   particles: [],
+  enemies: [],
   activeImage: null,
   imageName: "",
   lastTime: performance.now(),
+  statusText: statusLabel.textContent,
 };
 
 class Particle {
@@ -126,6 +128,94 @@ class Particle {
   }
 }
 
+class Enemy {
+  constructor() {
+    this.x = 0;
+    this.y = 0;
+    this.vx = 0;
+    this.vy = 0;
+    this.speed = 0;
+    this.radius = 0;
+    this.heading = 0;
+    this.respawn();
+  }
+
+  respawn() {
+    this.radius = randomRange(12, 20);
+    this.speed = randomRange(1.1, 2.3);
+    const margin = this.radius * 2.8;
+    const edge = Math.floor(randomRange(0, 4));
+    let baseHeading = 0;
+
+    if (edge === 0) {
+      this.x = randomRange(0, state.width);
+      this.y = -margin;
+      baseHeading = Math.PI * 0.5;
+    } else if (edge === 1) {
+      this.x = state.width + margin;
+      this.y = randomRange(0, state.height);
+      baseHeading = Math.PI;
+    } else if (edge === 2) {
+      this.x = randomRange(0, state.width);
+      this.y = state.height + margin;
+      baseHeading = Math.PI * 1.5;
+    } else {
+      this.x = -margin;
+      this.y = randomRange(0, state.height);
+      baseHeading = 0;
+    }
+
+    this.heading = baseHeading + randomRange(-0.65, 0.65);
+    this.vx = Math.cos(this.heading) * this.speed;
+    this.vy = Math.sin(this.heading) * this.speed;
+  }
+
+  update(dt) {
+    this.x += this.vx * dt;
+    this.y += this.vy * dt;
+
+    const margin = this.radius * 3;
+    const outOfBounds =
+      this.x < -margin ||
+      this.x > state.width + margin ||
+      this.y < -margin ||
+      this.y > state.height + margin;
+
+    if (outOfBounds) {
+      this.respawn();
+    }
+  }
+
+  touches(particle) {
+    const dx = particle.x + particle.size * 0.5 - this.x;
+    const dy = particle.y + particle.size * 0.5 - this.y;
+    const reach = this.radius + particle.size * 0.5;
+    return dx * dx + dy * dy <= reach * reach;
+  }
+
+  draw(ctx) {
+    const tailX = Math.cos(this.heading) * this.radius * 1.6;
+    const tailY = Math.sin(this.heading) * this.radius * 1.6;
+
+    ctx.beginPath();
+    ctx.arc(this.x, this.y, this.radius * 1.45, 0, Math.PI * 2);
+    ctx.fillStyle = "rgba(255, 108, 108, 0.12)";
+    ctx.fill();
+
+    ctx.beginPath();
+    ctx.moveTo(this.x - tailX * 0.45, this.y - tailY * 0.45);
+    ctx.lineTo(this.x + tailX, this.y + tailY);
+    ctx.strokeStyle = "rgba(255, 183, 183, 0.34)";
+    ctx.lineWidth = 2;
+    ctx.stroke();
+
+    ctx.beginPath();
+    ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+    ctx.fillStyle = "rgba(255, 92, 92, 0.92)";
+    ctx.fill();
+  }
+}
+
 function resizeCanvas() {
   state.width = window.innerWidth;
   state.height = window.innerHeight;
@@ -154,6 +244,50 @@ function resetPointerState() {
   pointer.down = false;
 }
 
+function setStatus(text) {
+  if (state.statusText === text) {
+    return;
+  }
+
+  state.statusText = text;
+  statusLabel.textContent = text;
+}
+
+function getShortImageName() {
+  return state.imageName.length > 28 ? `${state.imageName.slice(0, 25).trimEnd()}...` : state.imageName;
+}
+
+function getEnemyCount(particleCount) {
+  return clamp(Math.round(particleCount / 2200), 2, 7);
+}
+
+function rebuildEnemies() {
+  if (!state.particles.length) {
+    state.enemies = [];
+    return;
+  }
+
+  state.enemies = Array.from({ length: getEnemyCount(state.particles.length) }, () => new Enemy());
+}
+
+function updateParticleStatus() {
+  if (!state.activeImage) {
+    setStatus("Awaiting an upload.");
+    return;
+  }
+
+  const shortName = getShortImageName() || "image";
+
+  if (!state.particles.length) {
+    setStatus(`All particles from ${shortName} were eliminated. Upload another image to restart.`);
+    return;
+  }
+
+  setStatus(
+    `${state.particles.length.toLocaleString()} particles remain in ${shortName}. ${state.enemies.length} enemies are roaming. Move through them to disturb, hold primary mouse to attract.`,
+  );
+}
+
 function loadFile(file) {
   if (!file) {
     return;
@@ -164,7 +298,7 @@ function loadFile(file) {
 
   resetPointerState();
   introCard.classList.remove("is-hidden");
-  statusLabel.textContent = `Loading ${file.name}...`;
+  setStatus(`Loading ${file.name}...`);
 
   reader.onload = (event) => {
     image.onload = () => {
@@ -176,8 +310,9 @@ function loadFile(file) {
     image.onerror = () => {
       state.activeImage = null;
       state.particles = [];
+      state.enemies = [];
       introCard.classList.remove("is-hidden");
-      statusLabel.textContent = "That image could not be decoded. Try a PNG, JPEG, or WebP file.";
+      setStatus("That image could not be decoded. Try a PNG, JPEG, or WebP file.");
     };
 
     image.src = event.target?.result ?? "";
@@ -186,8 +321,9 @@ function loadFile(file) {
   reader.onerror = () => {
     state.activeImage = null;
     state.particles = [];
+    state.enemies = [];
     introCard.classList.remove("is-hidden");
-    statusLabel.textContent = "The selected file could not be read.";
+    setStatus("The selected file could not be read.");
   };
 
   reader.readAsDataURL(file);
@@ -214,8 +350,9 @@ function buildParticlesFromImage(image) {
   const offscreenContext = offscreen.getContext("2d", { willReadFrequently: true });
   if (!offscreenContext) {
     state.particles = [];
+    state.enemies = [];
     introCard.classList.remove("is-hidden");
-    statusLabel.textContent = "Canvas processing is unavailable in this browser.";
+    setStatus("Canvas processing is unavailable in this browser.");
     return;
   }
 
@@ -253,18 +390,16 @@ function buildParticlesFromImage(image) {
   }
 
   state.particles = particles;
+  rebuildEnemies();
 
   introCard.classList.toggle("is-hidden", particles.length > 0);
 
   if (!particles.length) {
-    statusLabel.textContent = "No visible pixels were detected in that image.";
+    setStatus("No visible pixels were detected in that image.");
     return;
   }
 
-  const shortName =
-    state.imageName.length > 28 ? `${state.imageName.slice(0, 25).trimEnd()}...` : state.imageName;
-
-  statusLabel.textContent = `${particles.length.toLocaleString()} particles from ${shortName || "image"}. Move through them to disturb, hold primary mouse to attract.`;
+  updateParticleStatus();
 }
 
 function drawBackground() {
@@ -290,17 +425,50 @@ function drawPointerAttractor() {
   context.stroke();
 }
 
+function drawEnemies() {
+  for (const enemy of state.enemies) {
+    enemy.draw(context);
+  }
+}
+
+function enemyEliminatesParticle(particle) {
+  for (const enemy of state.enemies) {
+    if (enemy.touches(particle)) {
+      return true;
+    }
+  }
+
+  return false;
+}
+
 function animate(now) {
   const dt = Math.min(2.2, (now - state.lastTime) / 16.6667 || 1);
   state.lastTime = now;
 
   drawBackground();
 
-  for (const particle of state.particles) {
-    particle.update(dt, now);
-    particle.draw(context);
+  for (const enemy of state.enemies) {
+    enemy.update(dt);
   }
 
+  const survivors = [];
+
+  for (const particle of state.particles) {
+    if (enemyEliminatesParticle(particle)) {
+      continue;
+    }
+
+    particle.update(dt, now);
+    particle.draw(context);
+    survivors.push(particle);
+  }
+
+  if (survivors.length !== state.particles.length) {
+    state.particles = survivors;
+    updateParticleStatus();
+  }
+
+  drawEnemies();
   drawPointerAttractor();
 
   pointer.vx *= 0.82;
@@ -365,7 +533,7 @@ canvas.addEventListener("pointerdown", (event) => {
   setPointerPosition(event);
   pointer.down = true;
   canvas.setPointerCapture(event.pointerId);
-  statusLabel.textContent = "Gravity pull engaged. Keep holding primary mouse to draw particles inward.";
+  setStatus("Gravity pull engaged. Keep holding primary mouse to draw particles inward while enemies erase pixels on contact.");
 });
 canvas.addEventListener("pointerup", (event) => {
   if (event.button !== 0) {
@@ -377,9 +545,7 @@ canvas.addEventListener("pointerup", (event) => {
     canvas.releasePointerCapture(event.pointerId);
   }
 
-  if (state.particles.length) {
-    statusLabel.textContent = "Gravity pull released. Move through the particles or hold primary mouse to attract them again.";
-  }
+  updateParticleStatus();
 });
 canvas.addEventListener("pointercancel", (event) => {
   pointer.down = false;
@@ -388,6 +554,7 @@ canvas.addEventListener("pointercancel", (event) => {
   if (canvas.hasPointerCapture(event.pointerId)) {
     canvas.releasePointerCapture(event.pointerId);
   }
+  updateParticleStatus();
 });
 
 window.addEventListener("resize", resizeCanvas);
