@@ -29,20 +29,15 @@ const state = {
 
 class Particle {
   constructor({ x, y, color, size, seed }) {
-    const angle = Math.random() * Math.PI * 2;
-    const launchSpeed = 0.35 + Math.random() * 0.9;
-
     this.x = x;
     this.y = y;
-    this.vx = Math.cos(angle) * launchSpeed;
-    this.vy = Math.sin(angle) * launchSpeed;
+    this.vx = 0;
+    this.vy = 0;
     this.ax = 0;
     this.ay = 0;
     this.color = color;
     this.size = size;
     this.seed = seed;
-    this.drift = 0.008 + Math.random() * 0.022;
-    this.phase = Math.random() * Math.PI * 2;
   }
 
   applyForce(x, y) {
@@ -51,14 +46,6 @@ class Particle {
   }
 
   update(dt, time) {
-    const ambientPhase = time * 0.00045 + this.seed * 1.7 + this.phase;
-    const ambientForce = this.drift * dt;
-
-    this.applyForce(
-      Math.cos(ambientPhase) * ambientForce,
-      Math.sin(ambientPhase * 1.13 + this.phase) * ambientForce,
-    );
-
     if (pointer.active && pointer.speed > 0.01) {
       const dx = this.x - pointer.x;
       const dy = this.y - pointer.y;
