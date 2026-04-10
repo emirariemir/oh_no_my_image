@@ -29,6 +29,8 @@ const state = {
 
 class Particle {
   constructor({ x, y, color, size, seed }) {
+    this.homeX = x;
+    this.homeY = y;
     this.x = x;
     this.y = y;
     this.vx = 0;
@@ -46,6 +48,12 @@ class Particle {
   }
 
   update(dt, time) {
+    const settleStrength = 0.028 * dt;
+    const driftX = Math.sin(time * 0.0012 + this.seed) * 0.01;
+    const driftY = Math.cos(time * 0.0014 + this.seed * 2.3) * 0.01;
+
+    this.applyForce((this.homeX - this.x) * settleStrength + driftX, (this.homeY - this.y) * settleStrength + driftY);
+
     if (pointer.active && pointer.speed > 0.01) {
       const dx = this.x - pointer.x;
       const dy = this.y - pointer.y;
@@ -142,6 +150,18 @@ function resizeCanvas() {
   }
 }
 
+function resetPointerState() {
+  pointer.x = 0;
+  pointer.y = 0;
+  pointer.px = 0;
+  pointer.py = 0;
+  pointer.vx = 0;
+  pointer.vy = 0;
+  pointer.speed = 0;
+  pointer.active = false;
+  pointer.down = false;
+}
+
 function loadFile(file) {
   if (!file) {
     return;
@@ -150,6 +170,10 @@ function loadFile(file) {
   const image = new Image();
   const reader = new FileReader();
 
+  resetPointerState();
+  introCard.classList.remove("is-hidden");
+  statusLabel.textContent = `Loading ${file.name}...`;
+
   reader.onload = (event) => {
     image.onload = () => {
       state.activeImage = image;
@@ -157,7 +181,21 @@ function loadFile(file) {
       buildParticlesFromImage(image);
     };
 
-    image.src = event.target.result;
+    image.onerror = () => {
+      state.activeImage = null;
+      state.particles = [];
+      introCard.classList.remove("is-hidden");
+      statusLabel.textContent = "That image could not be decoded. Try a PNG, JPEG, or WebP file.";
+    };
+
+    image.src = event.target?.result ?? "";
+  };
+
+  reader.onerror = () => {
+    state.activeImage = null;
+    state.particles = [];
+    introCard.classList.remove("is-hidden");
+    statusLabel.textContent = "The selected file could not be read.";
   };
 
   reader.readAsDataURL(file);
@@ -182,6 +220,13 @@ function buildParticlesFromImage(image) {
   offscreen.width = displayWidth;
   offscreen.height = displayHeight;
   const offscreenContext = offscreen.getContext("2d", { willReadFrequently: true });
+  if (!offscreenContext) {
+    state.particles = [];
+    introCard.classList.remove("is-hidden");
+    statusLabel.textContent = "Canvas processing is unavailable in this browser.";
+    return;
+  }
+
   offscreenContext.drawImage(image, 0, 0, displayWidth, displayHeight);
 
   const { data } = offscreenContext.getImageData(0, 0, displayWidth, displayHeight);
@@ -232,6 +277,8 @@ function buildParticlesFromImage(image) {
 
 function drawBackground() {
   context.clearRect(0, 0, state.width, state.height);
+  context.fillStyle = "rgba(7, 9, 14, 0.12)";
+  context.fillRect(0, 0, state.width, state.height);
 }
 
 function drawPointerAttractor() {
