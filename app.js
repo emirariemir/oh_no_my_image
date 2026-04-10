@@ -29,17 +29,20 @@ const state = {
 
 class Particle {
   constructor({ x, y, color, size, seed }) {
-    this.homeX = x;
-    this.homeY = y;
+    const angle = Math.random() * Math.PI * 2;
+    const launchSpeed = 0.35 + Math.random() * 0.9;
+
     this.x = x;
     this.y = y;
-    this.vx = 0;
-    this.vy = 0;
+    this.vx = Math.cos(angle) * launchSpeed;
+    this.vy = Math.sin(angle) * launchSpeed;
     this.ax = 0;
     this.ay = 0;
     this.color = color;
     this.size = size;
     this.seed = seed;
+    this.drift = 0.008 + Math.random() * 0.022;
+    this.phase = Math.random() * Math.PI * 2;
   }
 
   applyForce(x, y) {
@@ -48,11 +51,13 @@ class Particle {
   }
 
   update(dt, time) {
-    const settleStrength = 0.028 * dt;
-    const driftX = Math.sin(time * 0.0012 + this.seed) * 0.01;
-    const driftY = Math.cos(time * 0.0014 + this.seed * 2.3) * 0.01;
+    const ambientPhase = time * 0.00045 + this.seed * 1.7 + this.phase;
+    const ambientForce = this.drift * dt;
 
-    this.applyForce((this.homeX - this.x) * settleStrength + driftX, (this.homeY - this.y) * settleStrength + driftY);
+    this.applyForce(
+      Math.cos(ambientPhase) * ambientForce,
+      Math.sin(ambientPhase * 1.13 + this.phase) * ambientForce,
+    );
 
     if (pointer.active && pointer.speed > 0.01) {
       const dx = this.x - pointer.x;
@@ -92,8 +97,8 @@ class Particle {
 
     this.vx += this.ax;
     this.vy += this.ay;
-    this.vx *= 0.94;
-    this.vy *= 0.94;
+    this.vx *= 0.988;
+    this.vy *= 0.988;
 
     const maxVelocity = 18;
     const speed = Math.hypot(this.vx, this.vy);
@@ -272,7 +277,7 @@ function buildParticlesFromImage(image) {
   const shortName =
     state.imageName.length > 28 ? `${state.imageName.slice(0, 25).trimEnd()}...` : state.imageName;
 
-  statusLabel.textContent = `${particles.length.toLocaleString()} particles from ${shortName || "image"}. Move through them to disturb, hold to attract.`;
+  statusLabel.textContent = `${particles.length.toLocaleString()} particles from ${shortName || "image"}. Move through them to disturb, hold primary mouse to attract.`;
 }
 
 function drawBackground() {
@@ -366,19 +371,27 @@ canvas.addEventListener("pointerdown", (event) => {
     return;
   }
 
+  if (event.button !== 0) {
+    return;
+  }
+
   setPointerPosition(event);
   pointer.down = true;
   canvas.setPointerCapture(event.pointerId);
-  statusLabel.textContent = "Attractor engaged. Keep holding to pull the particles inward.";
+  statusLabel.textContent = "Gravity pull engaged. Keep holding primary mouse to draw particles inward.";
 });
 canvas.addEventListener("pointerup", (event) => {
+  if (event.button !== 0) {
+    return;
+  }
+
   pointer.down = false;
   if (canvas.hasPointerCapture(event.pointerId)) {
     canvas.releasePointerCapture(event.pointerId);
   }
 
   if (state.particles.length) {
-    statusLabel.textContent = "Attractor released. Move through the particles to hit them again.";
+    statusLabel.textContent = "Gravity pull released. Move through the particles or hold primary mouse to attract them again.";
   }
 });
 canvas.addEventListener("pointercancel", (event) => {
