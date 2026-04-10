@@ -1,15 +1,13 @@
 :root {
   color-scheme: dark;
-  --bg: #090b10;
-  --bg-2: #111521;
-  --panel: rgba(13, 17, 27, 0.76);
-  --panel-border: rgba(214, 227, 255, 0.12);
-  --text: #f2f5fb;
-  --muted: rgba(242, 245, 251, 0.7);
-  --soft: rgba(242, 245, 251, 0.45);
-  --accent: #8dc4ff;
-  --accent-strong: #c3ecff;
-  --shadow: 0 24px 80px rgba(0, 0, 0, 0.38);
+  --bg: #0b0b0b;
+  --panel: rgba(18, 18, 18, 0.94);
+  --panel-border: #3a3a3a;
+  --text: #efefef;
+  --muted: #b8b8b8;
+  --soft: #7d7d7d;
+  --accent: #d0d0d0;
+  --accent-strong: #ffffff;
 }
 
 * {
@@ -20,12 +18,11 @@ html,
 body {
   margin: 0;
   min-height: 100%;
-  background:
-    radial-gradient(circle at top left, rgba(79, 119, 190, 0.22), transparent 34%),
-    radial-gradient(circle at bottom right, rgba(17, 70, 82, 0.35), transparent 28%),
-    linear-gradient(145deg, var(--bg), var(--bg-2));
+  background: var(--bg);
   color: var(--text);
-  font-family: "Avenir Next", "Segoe UI", "Helvetica Neue", sans-serif;
+  font-family:
+    "IBM Plex Mono", "SFMono-Regular", "SF Mono", Consolas, "Liberation Mono",
+    Menlo, monospace;
 }
 
 body {
@@ -75,10 +72,8 @@ label {
 .controls,
 .intro-card,
 .hud {
-  backdrop-filter: blur(18px);
   background: var(--panel);
   border: 1px solid var(--panel-border);
-  box-shadow: var(--shadow);
 }
 
 .brand {
@@ -86,17 +81,14 @@ label {
   align-items: center;
   gap: 0.85rem;
   padding: 0.85rem 1rem;
-  border-radius: 999px;
+  border-radius: 0;
 }
 
 .brand-mark {
-  width: 0.9rem;
-  height: 0.9rem;
-  border-radius: 999px;
-  background:
-    radial-gradient(circle at 30% 30%, #ffffff, rgba(255, 255, 255, 0.1) 40%),
-    linear-gradient(180deg, var(--accent), #4c85ff);
-  box-shadow: 0 0 22px rgba(141, 196, 255, 0.62);
+  width: 0.8rem;
+  height: 0.8rem;
+  border: 1px solid var(--accent);
+  background: transparent;
 }
 
 .brand h1,
@@ -107,13 +99,14 @@ label {
 }
 
 .brand h1 {
-  font-size: 1.05rem;
-  letter-spacing: 0.02em;
+  font-size: 1rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
 }
 
 .eyebrow {
   text-transform: uppercase;
-  letter-spacing: 0.18em;
+  letter-spacing: 0.16em;
   font-size: 0.66rem;
   color: var(--soft);
 }
@@ -126,7 +119,7 @@ label {
   justify-content: flex-end;
   gap: 0.6rem;
   padding: 0.65rem;
-  border-radius: 999px;
+  border-radius: 0;
 }
 
 #imageUpload {
@@ -140,24 +133,24 @@ label {
 
 .button {
   appearance: none;
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--panel-border);
+  background: transparent;
   color: var(--text);
   padding: 0.72rem 1rem;
-  border-radius: 999px;
+  border-radius: 0;
   cursor: pointer;
   transition:
-    transform 180ms ease,
     background 180ms ease,
     border-color 180ms ease,
     opacity 180ms ease;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
 }
 
 .button:hover:not(:disabled),
 .button:focus-visible:not(:disabled) {
-  transform: translateY(-1px);
-  background: rgba(255, 255, 255, 0.08);
-  border-color: rgba(255, 255, 255, 0.22);
+  background: rgba(255, 255, 255, 0.04);
+  border-color: var(--accent-strong);
 }
 
 .button:disabled {
@@ -166,8 +159,8 @@ label {
 }
 
 .button-primary {
-  background: linear-gradient(135deg, rgba(141, 196, 255, 0.28), rgba(195, 236, 255, 0.12));
-  border-color: rgba(141, 196, 255, 0.35);
+  border-color: var(--accent);
+  background: rgba(255, 255, 255, 0.03);
 }
 
 .button-ghost {
@@ -179,7 +172,7 @@ label {
   top: 50%;
   width: min(32rem, calc(100vw - 2.4rem));
   padding: 1.5rem;
-  border-radius: 1.4rem;
+  border-radius: 0;
   transform: translate(-50%, -50%);
   transition:
     opacity 260ms ease,
@@ -195,9 +188,10 @@ label {
 
 .intro-card h2 {
   margin-top: 0.5rem;
-  font-size: clamp(2rem, 3.8vw, 3.5rem);
-  line-height: 0.94;
-  max-width: 12ch;
+  font-size: clamp(1.8rem, 3vw, 2.8rem);
+  line-height: 1.08;
+  max-width: 14ch;
+  text-transform: uppercase;
 }
 
 .intro-copy,
@@ -208,8 +202,8 @@ label {
 
 .intro-copy {
   margin: 1rem 0 1.25rem;
-  font-size: 1rem;
-  line-height: 1.6;
+  font-size: 0.95rem;
+  line-height: 1.7;
   max-width: 34ch;
 }
 
@@ -222,7 +216,8 @@ label {
 
 .hint {
   margin: 0;
-  font-size: 0.9rem;
+  font-size: 0.85rem;
+  line-height: 1.6;
 }
 
 .hud {
@@ -230,7 +225,7 @@ label {
   bottom: 1.2rem;
   transform: translateX(-50%);
   width: min(48rem, calc(100vw - 2.4rem));
-  border-radius: 999px;
+  border-radius: 0;
   padding: 0.9rem 1.1rem;
   display: flex;
   justify-content: space-between;
@@ -259,7 +254,7 @@ label {
   .controls,
   .brand,
   .hud {
-    border-radius: 1.2rem;
+    border-radius: 0;
   }
 
   .controls,
